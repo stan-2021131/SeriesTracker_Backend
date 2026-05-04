@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./BD:/docker-entrypoint-initdb.d
+  backendgo:
+    build: ./Backend
+    ports:
+      - "${BACKEND_PORT}:3000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    volumes:
+      - ./Backend/uploads:/app/uploads
+
+volumes:
+  postgres_data:
