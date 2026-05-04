@@ -33,3 +33,24 @@ func GetSerie(database *sql.DB, id int) (model.Serie, error) {
 	}
 	return s, nil
 }
+
+func CreateSerie(database *sql.DB, serie *model.Serie) error {
+	query := `INSERT INTO series (titulo, sinopsis, episodios, pais_origen, genero_principal, portada_url) VALUES ($1, $2, $3, $4, $5, $6)`
+
+	_, err := database.Exec(
+		query,
+		serie.Titulo,
+		serie.Sinopsis,
+		serie.Episodios,
+		serie.PaisOrigen,
+		serie.GeneroPrincipal,
+		serie.PortadaURL,
+	)
+	return err
+}
+
+func DeleteSerie(database *sql.DB, id int) error {
+	query := "DELETE FROM series WHERE id = $1"
+	_, err := database.Exec(query, id)
+	return err
+}

@@ -40,7 +40,7 @@ func main() {
 		w.Write([]byte("API up and running"))
 	})
 
-	http.HandleFunc("/series", handlers.GetSeries(database))
+	http.HandleFunc("/series", handlers.SeriesHandler(database))
 	http.HandleFunc("/series/", handlers.GetSerieById(database))
 
 	// Servir imágenes (para más adelante)
