@@ -23,3 +23,13 @@ func GetSeries(database *sql.DB) ([]model.Serie, error) {
 	}
 	return series, nil
 }
+
+func GetSerie(database *sql.DB, id int) (model.Serie, error) {
+	var s model.Serie
+	row := database.QueryRow("SELECT * FROM series WHERE id = $1", id)
+	err := row.Scan(&s.ID, &s.Titulo, &s.Sinopsis, &s.Episodios, &s.PaisOrigen, &s.GeneroPrincipal, &s.PortadaURL, &s.FechaCreacion)
+	if err != nil {
+		return s, err
+	}
+	return s, nil
+}
