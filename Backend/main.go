@@ -2,42 +2,28 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
+
+	"series-tracker/db"
+	"series-tracker/handlers"
 
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
-
 func main() {
-	// Leer variables de entorno
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-
-	// String de conexión
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname,
-	)
-
-	// Conectar con retry (importante en Docker)
+	// Conectar con retry
 	var err error
+	var database *sql.DB
 	for i := 0; i < 10; i++ {
-		db, err = sql.Open("postgres", connStr)
+		database, err = db.ConnectDB()
 		if err == nil {
-			err = db.Ping()
+			err = database.Ping()
 			if err == nil {
 				break
 			}
 		}
-
 		log.Println("Esperando a la base de datos...")
 		time.Sleep(2 * time.Second)
 	}
@@ -53,6 +39,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("API up and running"))
 	})
+
+	http.HandleFunc("/series", handlers.GetSeries(database))
 
 	// Servir imágenes (para más adelante)
 	http.Handle("/uploads/",
