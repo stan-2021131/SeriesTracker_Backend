@@ -2,30 +2,71 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"series-tracker/model"
 )
 
-func GetSeries(database *sql.DB, limit int, offset int, q string) ([]model.Serie, error) {
+func GetSeries(database *sql.DB, limit int, offset int, q string, sort string, order string) ([]model.Serie, error) {
 	var series []model.Serie
 	var rows *sql.Rows
 	var err error
-	if q != "" {
-		rows, err = database.Query(`SELECT * FROM series WHERE titulo ILIKE '%' || $3 || '%' LIMIT $1 OFFSET $2`, limit, offset, q) // Realiza la consulta a la base de datos
-	} else {
-		rows, err = database.Query("SELECT * FROM series LIMIT $1 OFFSET $2", limit, offset) // Realiza la consulta a la base de datos
+	if sort == "" {
+		sort = "id"
 	}
+	if order != "asc" && order != "desc" {
+		order = "asc"
+	}
+	validSort := map[string]bool{
+		"id":             true,
+		"titulo":         true,
+		"episodios":      true,
+		"fecha_creacion": true,
+	}
+
+	if !validSort[sort] {
+		sort = "id"
+	}
+
+	baseQuery := `
+		SELECT id, titulo, sinopsis, episodios, pais_origen, genero_principal, portada_url, fecha_creacion
+		FROM series
+	`
+
+	// agregar búsqueda si hay q
+	if q != "" {
+		baseQuery += "WHERE titulo ILIKE '%' || $1 || '%' "
+		baseQuery += fmt.Sprintf("ORDER BY %s %s LIMIT $2 OFFSET $3", sort, order)
+
+		rows, err = database.Query(baseQuery, q, limit, offset)
+	} else {
+		baseQuery += fmt.Sprintf("ORDER BY %s %s LIMIT $1 OFFSET $2", sort, order)
+
+		rows, err = database.Query(baseQuery, limit, offset)
+	}
+
 	if err != nil {
 		return series, err
 	}
-	defer rows.Close() // Cierra la conexión cuando la función termine
+	defer rows.Close()
+
 	for rows.Next() {
 		var s model.Serie
-		err = rows.Scan(&s.ID, &s.Titulo, &s.Sinopsis, &s.Episodios, &s.PaisOrigen, &s.GeneroPrincipal, &s.PortadaURL, &s.FechaCreacion)
+		err = rows.Scan(
+			&s.ID,
+			&s.Titulo,
+			&s.Sinopsis,
+			&s.Episodios,
+			&s.PaisOrigen,
+			&s.GeneroPrincipal,
+			&s.PortadaURL,
+			&s.FechaCreacion,
+		)
 		if err != nil {
 			return series, err
 		}
 		series = append(series, s)
 	}
+
 	return series, nil
 }
 

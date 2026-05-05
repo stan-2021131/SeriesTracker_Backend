@@ -23,6 +23,8 @@ func SeriesHandler(db *sql.DB) http.HandlerFunc {
 			pageStr := query.Get("page")
 			limitStr := query.Get("limit")
 			q := query.Get("q")
+			sort := query.Get("sort")
+			order := query.Get("order")
 
 			//Convierte los valores de page y limit a enteros
 			page, err := strconv.Atoi(pageStr)
@@ -37,8 +39,9 @@ func SeriesHandler(db *sql.DB) http.HandlerFunc {
 
 			//Calcula el offset
 			offset := (page - 1) * limit
+
 			//Obtiene las series de la base de datos
-			series, err := repository.GetSeries(db, limit, offset, q)
+			series, err := repository.GetSeries(db, limit, offset, q, sort, order)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(map[string]string{
