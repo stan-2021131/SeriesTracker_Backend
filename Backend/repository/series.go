@@ -5,13 +5,18 @@ import (
 	"series-tracker/model"
 )
 
-func GetSeries(database *sql.DB) ([]model.Serie, error) {
+func GetSeries(database *sql.DB, limit int, offset int, q string) ([]model.Serie, error) {
 	var series []model.Serie
-	rows, err := database.Query("SELECT * FROM series") // Realiza la consulta a la base de datos
+	var rows *sql.Rows
+	var err error
+	if q != "" {
+		rows, err = database.Query(`SELECT * FROM series WHERE titulo ILIKE '%' || $3 || '%' LIMIT $1 OFFSET $2`, limit, offset, q) // Realiza la consulta a la base de datos
+	} else {
+		rows, err = database.Query("SELECT * FROM series LIMIT $1 OFFSET $2", limit, offset) // Realiza la consulta a la base de datos
+	}
 	if err != nil {
 		return series, err
-	} // Si hay error, retorna el slice vacío
-
+	}
 	defer rows.Close() // Cierra la conexión cuando la función termine
 	for rows.Next() {
 		var s model.Serie

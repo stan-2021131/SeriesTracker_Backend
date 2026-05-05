@@ -8,6 +8,7 @@ import (
 
 	"series-tracker/db"
 	"series-tracker/handlers"
+	"series-tracker/services"
 
 	_ "github.com/lib/pq"
 )
@@ -50,6 +51,8 @@ func main() {
 		),
 	)
 
+	// Middleware CORS
+	handler := services.EnableCORS(http.DefaultServeMux)
 	log.Println("Servidor corriendo en puerto 3000")
-	log.Fatal(http.ListenAndServe(":3000", nil))
+	log.Fatal(http.ListenAndServe(":3000", handler))
 }

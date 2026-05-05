@@ -18,7 +18,27 @@ func SeriesHandler(db *sql.DB) http.HandlerFunc {
 		switch r.Method {
 		case http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			series, err := repository.GetSeries(db)
+			query := r.URL.Query()
+			//Extrae los valores de page y limit de la query
+			pageStr := query.Get("page")
+			limitStr := query.Get("limit")
+			q := query.Get("q")
+
+			//Convierte los valores de page y limit a enteros
+			page, err := strconv.Atoi(pageStr)
+			limit, err := strconv.Atoi(limitStr)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "Los campos page y limit deben ser números",
+				})
+				return
+			}
+
+			//Calcula el offset
+			offset := (page - 1) * limit
+			//Obtiene las series de la base de datos
+			series, err := repository.GetSeries(db, limit, offset, q)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(map[string]string{
