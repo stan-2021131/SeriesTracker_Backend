@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"series-tracker/db"
@@ -42,7 +43,13 @@ func main() {
 	})
 
 	http.HandleFunc("/series", handlers.SeriesHandler(database))
-	http.HandleFunc("/series/", handlers.SeriesById(database))
+	http.HandleFunc("/series/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/ratings") {
+			handlers.RatingHandler(database)(w, r)
+			return
+		}
+		handlers.SeriesById(database)(w, r)
+	})
 
 	// Servir imágenes (para más adelante)
 	http.Handle("/uploads/",
