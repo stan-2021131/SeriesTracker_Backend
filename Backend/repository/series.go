@@ -54,3 +54,18 @@ func DeleteSerie(database *sql.DB, id int) error {
 	_, err := database.Exec(query, id)
 	return err
 }
+
+func UpdateSerie(database *sql.DB, serie *model.Serie, id int) error {
+	query := `UPDATE series SET titulo = $1, sinopsis = $2, episodios = $3, pais_origen = $4, genero_principal = $5, portada_url = $6 WHERE id = $7`
+	_, err := database.Exec(
+		query,
+		serie.Titulo,
+		serie.Sinopsis,
+		serie.Episodios,
+		serie.PaisOrigen,
+		serie.GeneroPrincipal,
+		serie.PortadaURL,
+		id,
+	)
+	return err
+}

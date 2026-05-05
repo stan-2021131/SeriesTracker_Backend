@@ -41,7 +41,7 @@ func main() {
 	})
 
 	http.HandleFunc("/series", handlers.SeriesHandler(database))
-	http.HandleFunc("/series/", handlers.GetSerieById(database))
+	http.HandleFunc("/series/", handlers.SeriesById(database))
 
 	// Servir imágenes (para más adelante)
 	http.Handle("/uploads/",
