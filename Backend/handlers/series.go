@@ -163,6 +163,27 @@ func SeriesById(db *sql.DB) http.HandlerFunc {
 				"message": "Serie actualizada exitosamente",
 				"data":    newSerie,
 			})
+		case http.MethodDelete:
+			w.Header().Set("Content-Type", "application/json")
+			err = repository.DeleteSerie(db, id)
+			if err == sql.ErrNoRows {
+				w.WriteHeader(http.StatusNotFound)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "No se encontro la serie",
+				})
+				return
+			}
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "Error al eliminar la serie",
+				})
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "Serie eliminada exitosamente",
+			})
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			json.NewEncoder(w).Encode(map[string]string{
