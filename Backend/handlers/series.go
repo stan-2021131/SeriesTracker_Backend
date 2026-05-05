@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"os"
 	"series-tracker/model"
 	"series-tracker/repository"
+	"series-tracker/services"
 	"strconv"
 	"strings"
 )
@@ -36,14 +38,29 @@ func SeriesHandler(db *sql.DB) http.HandlerFunc {
 		case http.MethodPost:
 			w.Header().Set("Content-Type", "application/json")
 			var newSerie model.Serie
-			err := json.NewDecoder(r.Body).Decode(&newSerie)
+
+			path, err := services.SaveImage(r, "imagen")
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(map[string]string{
-					"message": "Formato de serie inválido",
+					"message": err.Error(),
 				})
 				return
 			}
+			newSerie.PortadaURL = path
+			newSerie.Titulo = r.FormValue("titulo")
+			newSerie.Sinopsis = r.FormValue("sinopsis")
+			newSerie.PaisOrigen = r.FormValue("pais_origen")
+			newSerie.GeneroPrincipal = r.FormValue("genero_principal")
+			newSerie.Episodios, err = strconv.Atoi(r.FormValue("episodios"))
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "El campo episodios debe ser un número",
+				})
+				return
+			}
+
 			if newSerie.Titulo == "" || newSerie.Sinopsis == "" || newSerie.PaisOrigen == "" || newSerie.GeneroPrincipal == "" {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(map[string]string{
@@ -126,11 +143,51 @@ func SeriesById(db *sql.DB) http.HandlerFunc {
 		case http.MethodPut:
 			w.Header().Set("Content-Type", "application/json")
 			var newSerie model.Serie
-			err = json.NewDecoder(r.Body).Decode(&newSerie)
+
+			data, err := repository.GetSerie(db, id)
+			if err == sql.ErrNoRows {
+				w.WriteHeader(http.StatusNotFound)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": `No se encontro la serie`,
+				})
+				return
+			}
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "Error interno al obtener la serie",
+				})
+				return
+			}
+
+			path, err := services.SaveImage(r, "imagen")
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(map[string]string{
-					"message": "Formato de serie inválido",
+					"message": err.Error(),
+				})
+				return
+			}
+			if path == "/uploads/default.jpg" {
+				// no se subió imagen → mantener la actual
+				newSerie.PortadaURL = data.PortadaURL
+			} else {
+				// sí se subió imagen → reemplazar
+				newSerie.PortadaURL = path
+				if data.PortadaURL != "/uploads/default.jpg" {
+					_ = os.Remove("." + data.PortadaURL)
+				}
+			}
+
+			newSerie.Titulo = r.FormValue("titulo")
+			newSerie.Sinopsis = r.FormValue("sinopsis")
+			newSerie.PaisOrigen = r.FormValue("pais_origen")
+			newSerie.GeneroPrincipal = r.FormValue("genero_principal")
+			newSerie.Episodios, err = strconv.Atoi(r.FormValue("episodios"))
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "El campo episodios debe ser un número",
 				})
 				return
 			}
@@ -158,7 +215,7 @@ func SeriesById(db *sql.DB) http.HandlerFunc {
 				})
 				return
 			}
-			w.WriteHeader(http.StatusCreated)
+			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(map[string]any{
 				"message": "Serie actualizada exitosamente",
 				"data":    newSerie,

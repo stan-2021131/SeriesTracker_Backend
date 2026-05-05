@@ -28,6 +28,9 @@ func GetSerie(database *sql.DB, id int) (model.Serie, error) {
 	var s model.Serie
 	row := database.QueryRow("SELECT * FROM series WHERE id = $1", id)
 	err := row.Scan(&s.ID, &s.Titulo, &s.Sinopsis, &s.Episodios, &s.PaisOrigen, &s.GeneroPrincipal, &s.PortadaURL, &s.FechaCreacion)
+	if err == sql.ErrNoRows {
+		return s, sql.ErrNoRows
+	}
 	if err != nil {
 		return s, err
 	}
@@ -51,13 +54,20 @@ func CreateSerie(database *sql.DB, serie *model.Serie) error {
 
 func DeleteSerie(database *sql.DB, id int) error {
 	query := "DELETE FROM series WHERE id = $1"
-	_, err := database.Exec(query, id)
-	return err
+	res, err := database.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func UpdateSerie(database *sql.DB, serie *model.Serie, id int) error {
 	query := `UPDATE series SET titulo = $1, sinopsis = $2, episodios = $3, pais_origen = $4, genero_principal = $5, portada_url = $6 WHERE id = $7`
-	_, err := database.Exec(
+	res, err := database.Exec(
 		query,
 		serie.Titulo,
 		serie.Sinopsis,
@@ -67,5 +77,9 @@ func UpdateSerie(database *sql.DB, serie *model.Serie, id int) error {
 		serie.PortadaURL,
 		id,
 	)
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
 	return err
 }
