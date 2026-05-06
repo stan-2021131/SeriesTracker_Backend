@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -20,12 +21,19 @@ import (
 
 	httpSwagger "github.com/swaggo/http-swagger"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
 	// Conectar con retry
 	var err error
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Println("Error al cargar el archivo .env (producción)")
+	}
+
 	var database *sql.DB
 	for i := 0; i < 10; i++ {
 		database, err = db.ConnectDB()
@@ -35,6 +43,8 @@ func main() {
 				break
 			}
 		}
+		log.Println(os.Getenv("PORT"))
+		log.Println(os.Getenv("DATABASE_URL"))
 		log.Println("Esperando a la base de datos...")
 		time.Sleep(2 * time.Second)
 	}
@@ -69,8 +79,13 @@ func main() {
 
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	// Middleware CORS
 	handler := services.EnableCORS(http.DefaultServeMux)
-	log.Println("Servidor corriendo en puerto 3000")
-	log.Fatal(http.ListenAndServe(":3000", handler))
+	log.Println("Servidor corriendo en puerto " + port)
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
