@@ -1,0 +1,117 @@
+basePath: /
+host: localhost:3000
+info:
+  contact: {}
+  description: API para gestionar series y ratings
+  title: Series Tracker API
+  version: "1.0"
+paths:
+  /series:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Crea una nueva serie
+      parameters:
+      - description: Título
+        in: formData
+        name: titulo
+        required: true
+        type: string
+      - description: Sinopsis
+        in: formData
+        name: sinopsis
+        required: true
+        type: string
+      - description: País de origen
+        in: formData
+        name: pais_origen
+        required: true
+        type: string
+      - description: Género principal
+        in: formData
+        name: genero_principal
+        required: true
+        type: string
+      - description: Número de episodios
+        in: formData
+        name: episodios
+        required: true
+        type: integer
+      - description: Imagen de portada
+        in: formData
+        name: imagen
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear serie
+      tags:
+      - series
+  /series/{id}:
+    delete:
+      parameters:
+      - description: ID de la serie
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Eliminar serie
+      tags:
+      - series
+  /series/{id}/ratings:
+    get:
+      description: Retorna el promedio de ratings de una serie
+      parameters:
+      - description: ID de la serie
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener rating promedio
+      tags:
+      - ratings
+swagger: "2.0"

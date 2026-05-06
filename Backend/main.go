@@ -1,3 +1,8 @@
+// @title Series Tracker API
+// @version 1.0
+// @description API para gestionar series y ratings
+// @host
+// @BasePath /
 package main
 
 import (
@@ -10,6 +15,10 @@ import (
 	"series-tracker/db"
 	"series-tracker/handlers"
 	"series-tracker/services"
+
+	_ "series-tracker/docs"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	_ "github.com/lib/pq"
 )
@@ -57,6 +66,8 @@ func main() {
 			http.FileServer(http.Dir("./uploads")),
 		),
 	)
+
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	// Middleware CORS
 	handler := services.EnableCORS(http.DefaultServeMux)

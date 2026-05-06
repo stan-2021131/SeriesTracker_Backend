@@ -9,6 +9,12 @@ RUN go mod download
 # Copiar el código
 COPY . .
 
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+ENV GO111MODULE=on
+
+RUN swag init --parseDependency --parseInternal
+
 # Compilar
 RUN go build -o main .
 
